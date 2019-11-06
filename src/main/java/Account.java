@@ -1,6 +1,6 @@
 public class Account {
-	private volatile long money;
-	private volatile STATE state;
+    private long money;
+    private STATE state;
 	private String accNumber;
 
 	public Account(long money, String accNumber) {
@@ -9,7 +9,7 @@ public class Account {
 		this.state = STATE.NORMAL;
 	}
 
-	public long getMoney() {
+    public synchronized long getMoney() {
 		return money;
 	}
 
@@ -25,27 +25,27 @@ public class Account {
 		money += amount;
 	}
 
-	public boolean isBusy() {
+    public synchronized boolean isBusy() {
 		return this.state == STATE.BUSY;
 	}
 
-	public boolean isLocked() {
+    public synchronized boolean isLocked() {
 		return this.state == STATE.LOCKED;
 	}
 
-	public boolean isNormal() {
+    public synchronized boolean isNormal() {
 		return state == STATE.NORMAL;
 	}
 
-	public void setBusy() {
+    public synchronized void setBusy() {
 		this.state = STATE.BUSY;
 	}
 
-	public void setLocked() {
+    public synchronized void setLocked() {
 		this.state = STATE.LOCKED;
 	}
 
-	public void setNormal() {
+    public synchronized void setNormal() {
 		this.state = STATE.NORMAL;
 	}
 

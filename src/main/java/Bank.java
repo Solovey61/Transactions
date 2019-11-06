@@ -1,12 +1,12 @@
-import java.util.HashMap;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Bank {
     private final Random random = new Random();
-    private volatile HashMap<String, Account> accounts;
+    private ConcurrentHashMap<String, Account> accounts;
 
     public Bank() {
-        accounts = new HashMap<>();
+        accounts = new ConcurrentHashMap<>();
     }
 
     private synchronized boolean isFraud(String fromAccountNum, String toAccountNum, long amount)
@@ -15,7 +15,7 @@ public class Bank {
         return random.nextBoolean();
     }
 
-    public synchronized void addAccount(String accNumber, long money) {
+    public void addAccount(String accNumber, long money) {
         accounts.put(accNumber, new Account(money, accNumber));
     }
 
@@ -29,6 +29,11 @@ public class Bank {
     public void transfer(String fromAccountNum, String toAccountNum, long amount) throws InterruptedException {
         Account fromAccount = getAccount(fromAccountNum);
         Account toAccount = getAccount(toAccountNum);
+
+        if (fromAccount == toAccount) {
+            System.err.println("Can't transfer money to the same account");
+            return;
+        }
 
         if (fromAccount == null) {
             System.err.println(String.format("Account #%s was not found", fromAccountNum));
@@ -46,8 +51,11 @@ public class Bank {
             isBusy = fromAccount.isBusy() || toAccount.isBusy();
         }
 
-        synchronized (fromAccount) {
-            synchronized (toAccount) {
+        Account lockFirst = fromAccountNum.compareTo(toAccountNum) > 0 ? fromAccount : toAccount;
+        Account lockSecond = lockFirst == fromAccount ? toAccount : fromAccount;
+
+        synchronized (lockFirst) {
+            synchronized (lockSecond) {
                 if (fromAccount.isLocked() || toAccount.isLocked()) {
                     System.out.println(fromAccount.isLocked() ? toAccount.isLocked() ?
                             String.format("Accounts #%s and #%s are locked", fromAccountNum, toAccountNum) :
@@ -87,7 +95,7 @@ public class Bank {
         return getAccount(accountNum).getMoney();
     }
 
-    public HashMap<String, Account> getAccounts() {
+    public ConcurrentHashMap<String, Account> getAccounts() {
         return accounts;
     }
 }

@@ -60,4 +60,25 @@ public class BankTest {
         Assert.assertEquals(bank.getBalance("1"), 500000);
         Assert.assertEquals(bank.getBalance("5"), 500000);
     }
+
+    @Test
+    public void testDeadLock() throws InterruptedException {
+        Thread[] threads = new Thread[10];
+        for (int i = 0; i < threads.length; i++) {
+            threads[i] = new Thread(() -> {
+                try {
+                    for (int j = 0; j < 100000; j++) {
+                        bank.transfer("0", "1", 300);
+                        bank.transfer("1", "0", 500);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            });
+            threads[i].start();
+        }
+        for (Thread thread : threads) {
+            thread.join();
+        }
+    }
 }
